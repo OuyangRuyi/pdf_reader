@@ -57,7 +57,7 @@ const NotebookPanel = ({ notes, onRemoveNote, onExportMarkdown, isGeneratingSumm
           Notebook
           <span className="subtitle">Extracted Insights</span>
         </h2>
-        <button className="icon-btn" onClick={onExportMarkdown} title="Export to Markdown">
+        <button className="icon-btn" onClick={onExportMarkdown} title="Export as ZIP (Markdown + Images)">
           <Download size={18} />
         </button>
       </div>

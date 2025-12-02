@@ -1,4 +1,4 @@
-# PDF 学术阅读 Agent V6
+# PDF 学术阅读 Agent V6.1
 
 一个基于 AI 的智能 PDF 学术论文阅读助手，支持多模型切换和持久化记忆，帮助研究者高效分析和理解学术文献。
 
@@ -123,7 +123,7 @@ npm run dev
 - **弹窗查看**: 点击卡片打开全屏弹窗查看详细内容
 - **图片预览**: 支持大图显示、缩放和拖拽
 - **问题追踪**: 每张卡片显示触发的用户问题
-- **导出功能**: 支持Markdown格式导出
+- **导出功能**: 支持ZIP格式导出（包含Markdown文件和图片文件夹）
 
 ## 🏗️ 技术架构
 
@@ -170,7 +170,7 @@ frontend/
 
 ### 核心依赖
 - **后端**: FastAPI, google-generativeai, openai, PyMuPDF, Pillow, volcenginesdkarkruntime
-- **前端**: React, react-pdf, react-markdown, Lucide React, Vite
+- **前端**: React, react-pdf, react-markdown, Lucide React, JSZip, Vite
 
 ## 🎨 设计系统
 

@@ -114,24 +114,146 @@ function App() {
     }
   };
 
-  const handleExportMarkdown = () => {
+  const handleExportMarkdown = async () => {
     if (!notes.length) return;
     
-    let mdContent = `# Notes for Document\n\n`;
-    notes.forEach(note => {
-      mdContent += `## ${note.title}\n`;
-      mdContent += `*Page: ${note.page}*\n\n`;
-      mdContent += `${note.content}\n\n`;
-      mdContent += `---\n\n`;
-    });
+    try {
+      // Import JSZip dynamically
+      const JSZip = (await import('jszip')).default;
+      const zip = new JSZip();
+      
+      let mdContent = `# Notes for Document\n\n`;
+      const imageCounter = { count: 0 };
+      
+      console.log('Processing notes:', notes.length);
+      
+      // Process each note
+      for (const note of notes) {
+        console.log('Processing note:', note.title);
+        console.log('Note imageUrl:', note.imageUrl);
+        
+        let processedContent = note.content;
+        
+        // Handle imageUrl field (server-stored images)
+        if (note.imageUrl) {
+          imageCounter.count++;
+          
+          try {
+            // Get image extension from URL
+            const urlParts = note.imageUrl.split('.');
+            const imageType = urlParts[urlParts.length - 1] || 'png';
+            const filename = `image_${imageCounter.count}.${imageType}`;
+            
+            console.log(`Fetching image from: ${note.imageUrl}`);
+            
+            // Fetch image using Vite proxy (relative path)
+            const imageResponse = await fetch(note.imageUrl);
+            
+            if (imageResponse.ok) {
+              const imageBlob = await imageResponse.blob();
+              const imageArrayBuffer = await imageBlob.arrayBuffer();
+              const imageBytes = new Uint8Array(imageArrayBuffer);
+              
+              // Add image to zip
+              zip.file(`images/${filename}`, imageBytes);
+              console.log(`Added server image to ZIP: images/${filename}, size: ${imageBytes.length} bytes`);
+              
+              // Add image reference to markdown content
+              processedContent += `\n\n![${note.title}](images/${filename})`;
+              
+            } else {
+              console.error(`Failed to fetch image: ${note.imageUrl}, status: ${imageResponse.status}`);
+              // Still add a placeholder reference in markdown
+              processedContent += `\n\n![${note.title}](Image not available - ${note.imageUrl})`;
+            }
+            
+          } catch (error) {
+            console.error(`Error processing server image ${imageCounter.count}:`, error);
+            // Still add a placeholder reference in markdown
+            processedContent += `\n\n![${note.title}](Image not available - ${note.imageUrl})`;
+          }
+        }
+        
+        // Also handle base64 images in content (fallback for old data)
+        const base64ImageRegex = /!\[([^\]]*)\]\(data:image\/([^;]+);base64,([^)]+)\)/g;
+        const matches = [...note.content.matchAll(base64ImageRegex)];
+        console.log(`Found ${matches.length} base64 images in note content: ${note.title}`);
+        
+        for (const match of matches) {
+          const [fullMatch, altText, imageType, base64Data] = match;
+          imageCounter.count++;
+          
+          console.log(`Processing base64 image ${imageCounter.count}: type=${imageType}, altText="${altText}"`);
+          
+          // Generate filename
+          const filename = `image_${imageCounter.count}.${imageType}`;
+          
+          try {
+            // Convert base64 to binary
+            const binaryString = atob(base64Data);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            
+            // Add image to zip
+            zip.file(`images/${filename}`, bytes);
+            console.log(`Added base64 image to ZIP: images/${filename}, size: ${bytes.length} bytes`);
+            
+            // Replace base64 image with relative path in markdown
+            processedContent = processedContent.replace(fullMatch, `![${altText}](images/${filename})`);
+            
+          } catch (error) {
+            console.error(`Error processing base64 image ${imageCounter.count}:`, error);
+          }
+        }
+        
+        // Add processed content to markdown
+        mdContent += `## ${note.title}\n`;
+        if (note.page) {
+          mdContent += `*Page: ${note.page}*\n\n`;
+        }
+        mdContent += `${processedContent}\n\n`;
+        mdContent += `---\n\n`;
+      }
+      
+      console.log('Total images found:', imageCounter.count);
+      console.log('ZIP contents:', Object.keys(zip.files));
+      
+      // Add markdown file to zip
+      zip.file('notes.md', mdContent);
+      
+      // Generate and download zip file
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      console.log('Generated ZIP blob size:', zipBlob.size);
+      
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'notes.zip';
+      a.click();
+      URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Error exporting notes:', error);
+      
+      // Fallback to simple markdown export if JSZip fails
+      let mdContent = `# Notes for Document\n\n`;
+      notes.forEach(note => {
+        mdContent += `## ${note.title}\n`;
+        mdContent += `*Page: ${note.page}*\n\n`;
+        mdContent += `${note.content}\n\n`;
+        mdContent += `---\n\n`;
+      });
 
-    const blob = new Blob([mdContent], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'notes.md';
-    a.click();
-    URL.revokeObjectURL(url);
+      const blob = new Blob([mdContent], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'notes.md';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   };
 
   return (
