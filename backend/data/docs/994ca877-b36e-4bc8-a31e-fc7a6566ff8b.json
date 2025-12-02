@@ -1,0 +1,26 @@
+{
+  "doc_id": "994ca877-b36e-4bc8-a31e-fc7a6566ff8b",
+  "title": "",
+  "num_pages": 25,
+  "created_at": "2025-12-02T14:51:10.958912",
+  "notes": [
+    {
+      "id": "d0f75337-7fee-4f92-802e-704110380426",
+      "type": "page_summary",
+      "title": "Summary of Page 4",
+      "content": "Here's a summary of the provided page in bullet points:\n\n*   **Manifolds and Charts:** Manifolds, like a torus, can be described using overlapping coordinate charts (patches) because they cannot be unfolded onto a single plane without distortion. Coordinate changes are necessary to navigate between these charts.\n*   **Coordinate Invariance:** While multiple coordinate charts exist for a manifold, differential geometry ensures that most geometric properties remain independent of the chosen coordinate system (e.g., intrinsic dimension).\n*   **Embeddings:** Embeddings are smooth mappings between manifolds that aim to simplify the representation of data by mapping a manifold into a higher-dimensional space where it's easier to understand.\n*   **Dimension Reduction:** Finding a valid embedding can lead to significant dimension reduction, as stated by Whitney's embedding theorem.\n*   **Tangent Spaces:** The tangent space at a point on a manifold is a vector space representing the possible tangent vectors (velocities) at that point, providing a local linear approximation of the manifold.\n",
+      "page": 4,
+      "imageUrl": null,
+      "createdAt": "2025-12-02T14:51:49.929993"
+    },
+    {
+      "id": "ac6a70ff-6ff0-44e9-a07a-647ef61a30ed",
+      "type": "page_summary",
+      "title": "Summary of Page 5",
+      "content": "Here's a summary of the provided page in bullet points:\n\n*   **Manifold Assumption:** Data points are assumed to lie on or close to a lower-dimensional manifold embedded in a higher-dimensional space. Manifold Learning (ML) algorithms aim to discover and represent this manifold.\n\n*   **Manifold Learning Algorithms:** ML algorithms map high-dimensional data points to a lower-dimensional space, aiming to recover the underlying manifold structure.\n\n*   **Estimating Manifolds:** While the manifold assumption is testable, current methods require knowledge of manifold parameters that are often unknown in practice.\n\n*   **Neighborhood Graphs:** Most ML algorithms begin by constructing a neighborhood graph where nodes represent data points and edges connect neighboring points. This graph captures local geometric and topological information.\n\n*   **Types of Neighborhood Graphs:** Two common methods for defining neighbors are radius-neighbor graphs (based on a distance threshold) and k-nearest neighbor (k-NN) graphs. k-NN graphs are computationally advantageous but theoretically more challenging to analyze.\n",
+      "page": 5,
+      "imageUrl": null,
+      "createdAt": "2025-12-02T14:52:07.952397"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-multipart
+pymupdf
+google-generativeai
+google-genai
+pydantic
+Pillow
+httpx[socks]
