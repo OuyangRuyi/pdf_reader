@@ -1,0 +1,241 @@
+# PDF 学术阅读 Agent
+
+一个基于 AI 的智能 PDF 学术论文阅读助手，帮助研究者高效分析和理解学术文献。
+
+## ✨ 特性
+
+### 🎯 核心功能
+- **智能文档解析**: 自动提取PDF文档内容和结构
+- **页面级摘要**: 针对每页内容生成精准摘要
+- **图表生成**: 根据文本内容自动绘制流程图和示意图
+- **智能问答**: 基于文档内容的上下文对话
+- **笔记管理**: 自动保存和组织分析结果
+
+### 🎨 用户界面
+- **现代化设计**: 深色主题 + Glassmorphism 风格
+- **三栏布局**: 笔记面板 / PDF阅读器 / AI对话区
+- **响应式交互**: 卡片展开/收缩、智能滚动
+- **实时反馈**: 加载状态、进度指示
+
+### 🤖 AI 能力
+- **多模态理解**: 文本 + 图像内容分析
+- **智能规划**: 自动判断用户意图（文本/图像/混合）
+- **上下文记忆**: 维持对话历史和页面上下文
+
+## 🚀 快速开始
+
+### 环境要求
+- Python 3.8+
+- Node.js 16+
+- Conda (推荐使用 Anaconda 或 Miniconda)
+- Google Gemini API Key
+
+### 安装步骤
+
+#### 1. 克隆项目
+```bash
+git clone https://github.com/OuyangRuyi/pdf_reader.git
+cd pdf_reader
+```
+
+#### 2. 后端设置
+```bash
+cd backend
+
+# 创建conda环境
+conda create -n pdf_reader python=3.12 -y
+conda activate pdf_reader
+
+# 安装依赖
+pip install -r requirements.txt
+```
+
+创建 `.env` 文件并配置API密钥：
+```bash
+export GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+#### 3. 前端设置
+```bash
+cd frontend
+npm install
+```
+
+#### 4. 启动服务
+
+**后端服务** (Terminal 1):
+```bash
+cd backend
+conda activate pdf_reader
+uvicorn app.main:app --reload --port 8000
+```
+
+**前端服务** (Terminal 2):
+```bash
+cd frontend
+npm run dev
+```
+
+访问 `http://localhost:5173` 开始使用。
+
+## 📖 使用指南
+
+### 基础操作
+1. **上传PDF**: 点击中央上传区域选择PDF文件
+2. **自动分析**: 上传后自动生成文档概览
+3. **页面导航**: 使用底部工具栏切换页面和缩放
+4. **智能对话**: 在右侧输入问题或使用快捷按钮
+
+### 快捷功能
+- **Summarize**: 快速总结当前页面内容
+- **Draw Diagram**: 根据内容生成可视化图表
+- **自由提问**: 输入任何关于文档的问题
+
+### 笔记管理
+- **自动保存**: AI回复自动保存为笔记卡片
+- **卡片展开**: 点击Show More查看完整内容
+- **问题追踪**: 每张卡片显示触发的用户问题
+- **导出功能**: 支持Markdown格式导出
+
+## 🏗️ 技术架构
+
+### 后端 (FastAPI + Python)
+```
+backend/
+├── app/
+│   ├── main.py              # 主应用入口
+│   ├── models/              # 数据模型
+│   ├── services/            # 业务逻辑
+│   │   ├── agent_service.py # AI Agent核心服务
+│   │   ├── pdf_service.py   # PDF处理服务
+│   │   └── gemini_service.py # Gemini API集成
+│   ├── routers/             # API路由
+│   └── utils/               # 工具函数
+├── uploads/                 # 文件上传目录
+└── requirements.txt
+```
+
+### 前端 (React + Vite)
+```
+frontend/
+├── src/
+│   ├── components/          # React组件
+│   │   ├── NotebookPanel.jsx # 笔记面板
+│   │   ├── PDFViewer.jsx    # PDF阅读器
+│   │   └── AgentPanel.jsx   # AI对话面板
+│   ├── services/            # API服务
+│   ├── App.jsx             # 主应用组件
+│   ├── App.css             # 样式文件
+│   └── main.jsx            # 应用入口
+└── package.json
+```
+
+### 核心依赖
+- **后端**: FastAPI, google-generativeai, PyMuPDF, Pillow
+- **前端**: React, react-pdf, Lucide React, Vite
+
+## 🎨 设计系统
+
+### 颜色主题
+- **背景**: Zinc 950 深色渐变
+- **主色**: Blue 500 (#3b82f6)
+- **文本**: Zinc 100/400/500 层次
+- **强调**: Violet 500, Emerald 500
+
+### 布局规范
+- **三栏布局**: 300px | flex-1 | 350px
+- **高度控制**: 严格100vh约束
+- **滚动区域**: 每栏独立滚动
+- **响应式**: 最小宽度1024px
+
+## 🔧 配置选项
+
+### 环境变量
+```bash
+# 必需
+GEMINI_API_KEY=your_api_key
+
+# 可选
+UPLOAD_DIR=./uploads          # 文件上传目录
+MAX_FILE_SIZE=50              # 最大文件大小(MB)
+CORS_ORIGINS=http://localhost:5173  # CORS设置
+```
+
+### 前端配置
+在 `frontend/src/services/api.js` 中修改API端点：
+```javascript
+const API_BASE_URL = 'http://localhost:8000';
+```
+
+## 🧪 API 文档
+
+### 主要端点
+- `POST /upload/` - 上传PDF文件
+- `POST /agent/task` - 执行AI任务
+- `POST /agent/chat` - 对话交互
+- `GET /docs/{doc_id}/meta` - 获取文档元数据
+- `GET /docs/{doc_id}/pdf` - 获取PDF文件
+
+详细API文档: `http://localhost:8000/docs`
+
+## 🤝 贡献指南
+
+1. Fork 项目
+2. 创建功能分支: `git checkout -b feature/amazing-feature`
+3. 提交更改: `git commit -m 'Add amazing feature'`
+4. 推送分支: `git push origin feature/amazing-feature`
+5. 提交Pull Request
+
+## 📝 TODO
+
+### 🚀 模型支持增强
+- [ ] **多模型支持**: 集成更多Gemini模型变体
+  - [ ] Gemini 2.0 Flash Experimental
+  - [ ] Gemini 1.5 Pro
+  - [ ] Gemini 1.5 Flash
+- [ ] **模型切换界面**: 在右上角显示当前激活模型
+- [ ] **输入框模型选择器**: 在输入区域添加模型切换按钮
+- [ ] **模型性能对比**: 不同模型的响应速度和质量指标
+
+### 🎯 功能扩展
+- [ ] **批量处理**: 同时上传和分析多个PDF文件
+- [ ] **文档比较**: 对比两篇论文的异同点
+- [ ] **引用分析**: 自动提取和分析文献引用
+- [ ] **关键词标签**: 自动生成文档标签和关键词云
+- [ ] **搜索功能**: 全文搜索和语义搜索
+
+### 🎨 用户体验优化
+- [ ] **主题切换**: 支持浅色主题
+- [ ] **字体大小调节**: 可调节阅读字体大小
+- [ ] **快捷键支持**: 键盘快捷键操作
+- [ ] **拖拽上传**: 支持拖拽PDF文件上传
+- [ ] **进度提示优化**: 更详细的处理进度显示
+
+### 🔧 技术改进
+- [ ] **环境管理优化**: 提供Docker容器化部署选项
+- [ ] **缓存机制**: Redis缓存常用分析结果
+- [ ] **数据库集成**: PostgreSQL存储用户数据
+- [ ] **用户系统**: 登录注册和个人空间
+- [ ] **API限流**: 防止API滥用的限流机制
+- [ ] **错误重试**: 网络请求的自动重试机制
+
+### 📊 分析能力
+- [ ] **表格理解**: 更好的表格数据提取和分析
+- [ ] **公式识别**: 数学公式的识别和解释
+- [ ] **图表解读**: 自动分析论文中的图表
+- [ ] **统计分析**: 数据趋势和统计结果解读
+
+## 📄 许可证
+
+MIT License - 详见 [LICENSE](LICENSE) 文件
+
+## 🙏 致谢
+
+- [Google Gemini](https://deepmind.google/technologies/gemini/) - 强大的AI模型支持
+- [React PDF](https://github.com/wojtekmaj/react-pdf) - PDF渲染组件
+- [Lucide React](https://lucide.dev/) - 精美的图标库
+- [FastAPI](https://fastapi.tiangolo.com/) - 现代Python Web框架
+
+---
+
+如有问题或建议，请提交 [Issue](https://github.com/OuyangRuyi/pdf_reader/issues) 或联系开发者。
