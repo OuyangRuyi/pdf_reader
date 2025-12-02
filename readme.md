@@ -1,25 +1,32 @@
-# PDF 学术阅读 Agent
+# PDF 学术阅读 Agent V6
 
-一个基于 AI 的智能 PDF 学术论文阅读助手，帮助研究者高效分析和理解学术文献。
+一个基于 AI 的智能 PDF 学术论文阅读助手，支持多模型切换和持久化记忆，帮助研究者高效分析和理解学术文献。
 
 ## ✨ 特性
 
 ### 🎯 核心功能
 - **智能文档解析**: 自动提取PDF文档内容和结构
+- **多模型支持**: 集成Google Gemini、DeepSeek、ByteDance Doubao多种AI模型
+- **持久化记忆**: 基于文件MD5哈希的智能记忆系统，重新上传相同PDF自动恢复笔记和对话历史
 - **页面级摘要**: 针对每页内容生成精准摘要
-- **图表生成**: 根据文本内容自动绘制流程图和示意图
+- **图表生成**: 根据文本内容自动绘制流程图和示意图（Gemini模型独有）
 - **智能问答**: 基于文档内容的上下文对话
 - **笔记管理**: 自动保存和组织分析结果
 
 ### 🎨 用户界面
 - **现代化设计**: 深色主题 + Glassmorphism 风格
 - **三栏布局**: 笔记面板 / PDF阅读器 / AI对话区
+- **全屏弹窗系统**: Portal渲染的专业级弹窗，支持图片预览和缩放
+- **高级图片查看**: 70%大图显示、滚轮缩放(0.5x-5x)、拖拽平移、缩放控制面板
 - **响应式交互**: 卡片展开/收缩、智能滚动
 - **实时反馈**: 加载状态、进度指示
 
 ### 🤖 AI 能力
+- **多模型架构**: 统一接口支持Google Gemini 2.0/3.0、DeepSeek Chat/Reasoner、ByteDance Doubao
+- **动态模型切换**: 右上角交互式模型选择器，实时切换不同AI模型
 - **多模态理解**: 文本 + 图像内容分析
 - **智能规划**: 自动判断用户意图（文本/图像/混合）
+- **持久化记忆**: 基于MD5文件指纹的智能记忆系统
 - **上下文记忆**: 维持对话历史和页面上下文
 
 ## 🚀 快速开始
@@ -28,7 +35,10 @@
 - Python 3.8+
 - Node.js 16+
 - Conda (推荐使用 Anaconda 或 Miniconda)
-- Google Gemini API Key
+- 至少一个AI模型的API Key：
+  - Google Gemini API Key (支持图像生成)
+  - DeepSeek API Key (高质量文本分析)
+  - ByteDance ARK API Key (快速响应)
 
 ### 安装步骤
 
@@ -52,7 +62,14 @@ pip install -r requirements.txt
 
 创建 `.env` 文件并配置API密钥：
 ```bash
+# Google Gemini (支持文本生成和图像生成)
 export GEMINI_API_KEY=your_gemini_api_key_here
+
+# DeepSeek (高质量文本分析，可选)
+export DEEPSEEK_API_KEY=your_deepseek_api_key_here
+
+# ByteDance Doubao (快速响应，可选)
+export ARK_API_KEY=your_bytedance_ark_api_key_here
 ```
 
 #### 3. 前端设置
@@ -82,18 +99,29 @@ npm run dev
 
 ### 基础操作
 1. **上传PDF**: 点击中央上传区域选择PDF文件
-2. **自动分析**: 上传后自动生成文档概览
-3. **页面导航**: 使用底部工具栏切换页面和缩放
-4. **智能对话**: 在右侧输入问题或使用快捷按钮
+2. **自动分析**: 上传后自动生成文档概览（支持记忆恢复）
+3. **模型切换**: 右上角选择AI模型（Gemini/DeepSeek/Doubao）
+4. **页面导航**: 使用底部工具栏切换页面和缩放
+5. **智能对话**: 在右侧输入问题或使用快捷按钮
+
+### 高级功能
+- **模型选择**: 根据需求切换不同AI模型
+  - **Gemini**: 综合能力强，支持图像生成
+  - **DeepSeek**: 深度文本分析，逻辑推理
+  - **Doubao**: 快速响应，日常问答
+- **持久化记忆**: 相同PDF重新上传自动恢复历史
+- **全屏弹窗**: 点击卡片查看详细内容和大图
+- **图片缩放**: 在弹窗中支持滚轮缩放和拖拽平移
 
 ### 快捷功能
 - **Summarize**: 快速总结当前页面内容
-- **Draw Diagram**: 根据内容生成可视化图表
+- **Draw Diagram**: 根据内容生成可视化图表（仅Gemini）
 - **自由提问**: 输入任何关于文档的问题
 
 ### 笔记管理
 - **自动保存**: AI回复自动保存为笔记卡片
-- **卡片展开**: 点击Show More查看完整内容
+- **弹窗查看**: 点击卡片打开全屏弹窗查看详细内容
+- **图片预览**: 支持大图显示、缩放和拖拽
 - **问题追踪**: 每张卡片显示触发的用户问题
 - **导出功能**: 支持Markdown格式导出
 
@@ -105,13 +133,18 @@ backend/
 ├── app/
 │   ├── main.py              # 主应用入口
 │   ├── models/              # 数据模型
+│   │   └── schemas.py       # API数据模型
 │   ├── services/            # 业务逻辑
 │   │   ├── agent_service.py # AI Agent核心服务
-│   │   ├── pdf_service.py   # PDF处理服务
-│   │   └── gemini_service.py # Gemini API集成
-│   ├── routers/             # API路由
+│   │   ├── document_service.py # 文档处理和记忆管理
+│   │   ├── memory_service.py # 持久化记忆服务
+│   │   ├── gemini_client.py # Gemini API客户端
+│   │   └── multi_model_client.py # 多模型统一客户端
 │   └── utils/               # 工具函数
-├── uploads/                 # 文件上传目录
+├── data/
+│   ├── docs/                # 文档元数据存储
+│   ├── uploads/             # 文件上传目录
+│   └── file_map.json        # 文件MD5映射表
 └── requirements.txt
 ```
 
@@ -122,8 +155,13 @@ frontend/
 │   ├── components/          # React组件
 │   │   ├── NotebookPanel.jsx # 笔记面板
 │   │   ├── PDFViewer.jsx    # PDF阅读器
-│   │   └── AgentPanel.jsx   # AI对话面板
+│   │   ├── AgentPanel.jsx   # AI对话面板
+│   │   ├── ModelSelector.jsx # 模型选择器
+│   │   └── Modal/           # 弹窗组件
+│   │       ├── FullscreenModal.jsx # 全屏弹窗
+│   │       └── FullscreenModal.css # 弹窗样式
 │   ├── services/            # API服务
+│   │   └── api.js          # API接口封装
 │   ├── App.jsx             # 主应用组件
 │   ├── App.css             # 样式文件
 │   └── main.jsx            # 应用入口
@@ -131,8 +169,8 @@ frontend/
 ```
 
 ### 核心依赖
-- **后端**: FastAPI, google-generativeai, PyMuPDF, Pillow
-- **前端**: React, react-pdf, Lucide React, Vite
+- **后端**: FastAPI, google-generativeai, openai, PyMuPDF, Pillow, volcenginesdkarkruntime
+- **前端**: React, react-pdf, react-markdown, Lucide React, Vite
 
 ## 🎨 设计系统
 
@@ -151,22 +189,39 @@ frontend/
 ## 🧪 API 文档
 
 ### 主要端点
-- `POST /upload/` - 上传PDF文件
+- `POST /upload/` - 上传PDF文件（支持记忆恢复）
 - `POST /agent/task` - 执行AI任务
 - `POST /agent/chat` - 对话交互
+- `POST /agent/save-chat-history` - 保存对话历史
+- `DELETE /agent/chat/{message_id}` - 删除聊天消息
 - `GET /docs/{doc_id}/meta` - 获取文档元数据
 - `GET /docs/{doc_id}/pdf` - 获取PDF文件
+- `GET /models` - 获取可用模型列表
+- `POST /models/switch` - 切换当前模型
 
 详细API文档: `http://localhost:8000/docs`
 
-## 📝 TODO
+## 📝 开发历程
 
-### 🚀 模型支持增强
-- [ ] **多模型支持**: 集成更多Gemini模型变体
-  - [ ] Gemini 3.0
-- [ ] **模型切换界面**: 在右上角显示当前激活模型
-- [ ] **输入框模型选择器**: 在输入区域添加模型切换按钮
-- [ ] **模型性能对比**: 不同模型的响应速度和质量指标
+### ✅ V6 已完成功能 (当前版本)
+- ✅ **全屏弹窗系统**: Portal渲染的专业级弹窗组件
+- ✅ **高级图片查看**: 70%大图显示、滚轮缩放、拖拽平移
+- ✅ **缩放控制面板**: ±按钮、百分比显示、关闭按钮
+- ✅ **响应式设计**: 移动端适配和多屏幕支持
+- ✅ **文本与图片分离**: 文本左对齐，图片独立居中
+
+### ✅ V5 已完成功能
+- ✅ **持久化记忆**: 基于MD5哈希的文件指纹识别
+- ✅ **状态恢复**: 重新上传相同PDF自动恢复笔记和对话
+- ✅ **记忆管理**: 聊天历史的保存和删除功能
+
+### ✅ V4 已完成功能 
+- ✅ **多模型支持**: Google Gemini、DeepSeek、ByteDance Doubao
+- ✅ **模型切换界面**: 右上角交互式模型选择器
+- ✅ **统一客户端**: MultiModelClient架构
+- ✅ **能力适配**: 不同模型的特性自动适配
+
+### 🚀 未来规划
 
 ### 🎯 功能扩展
 - [ ] **批量处理**: 同时上传和分析多个PDF文件
@@ -182,17 +237,17 @@ frontend/
 - [ ] **拖拽上传**: 支持拖拽PDF文件上传
 
 ### 🔧 技术改进
-- [ ] **环境管理优化**: 提供Docker容器化部署选项
-- [ ] **数据库集成**: 数据库存储用户数据
+- [ ] **Docker部署**: 容器化部署选项
+- [ ] **数据库集成**: 数据库存储
 - [ ] **用户系统**: 登录注册和个人空间
-- [ ] **API限流**: 防止API滥用的限流机制
-- [ ] **错误重试**: 网络请求的自动重试机制
+- [ ] **API优化**: 限流、缓存、错误重试
+- [ ] **性能监控**: 模型响应时间和质量指标
 
 ### 📊 分析能力
 - [ ] **表格理解**: 更好的表格数据提取和分析
 - [ ] **公式识别**: 数学公式的识别和解释
 - [ ] **图表解读**: 自动分析论文中的图表
-- [ ] **统计分析**: 数据趋势和统计结果解读
+- [ ] **多语言支持**: 中英文混合文档处理
 
 ## 📄 许可证
 
