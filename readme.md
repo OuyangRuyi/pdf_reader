@@ -148,25 +148,6 @@ frontend/
 - **滚动区域**: 每栏独立滚动
 - **响应式**: 最小宽度1024px
 
-## 🔧 配置选项
-
-### 环境变量
-```bash
-# 必需
-GEMINI_API_KEY=your_api_key
-
-# 可选
-UPLOAD_DIR=./uploads          # 文件上传目录
-MAX_FILE_SIZE=50              # 最大文件大小(MB)
-CORS_ORIGINS=http://localhost:5173  # CORS设置
-```
-
-### 前端配置
-在 `frontend/src/services/api.js` 中修改API端点：
-```javascript
-const API_BASE_URL = 'http://localhost:8000';
-```
-
 ## 🧪 API 文档
 
 ### 主要端点
@@ -178,21 +159,11 @@ const API_BASE_URL = 'http://localhost:8000';
 
 详细API文档: `http://localhost:8000/docs`
 
-## 🤝 贡献指南
-
-1. Fork 项目
-2. 创建功能分支: `git checkout -b feature/amazing-feature`
-3. 提交更改: `git commit -m 'Add amazing feature'`
-4. 推送分支: `git push origin feature/amazing-feature`
-5. 提交Pull Request
-
 ## 📝 TODO
 
 ### 🚀 模型支持增强
 - [ ] **多模型支持**: 集成更多Gemini模型变体
-  - [ ] Gemini 2.0 Flash Experimental
-  - [ ] Gemini 1.5 Pro
-  - [ ] Gemini 1.5 Flash
+  - [ ] Gemini 3.0
 - [ ] **模型切换界面**: 在右上角显示当前激活模型
 - [ ] **输入框模型选择器**: 在输入区域添加模型切换按钮
 - [ ] **模型性能对比**: 不同模型的响应速度和质量指标
@@ -209,12 +180,10 @@ const API_BASE_URL = 'http://localhost:8000';
 - [ ] **字体大小调节**: 可调节阅读字体大小
 - [ ] **快捷键支持**: 键盘快捷键操作
 - [ ] **拖拽上传**: 支持拖拽PDF文件上传
-- [ ] **进度提示优化**: 更详细的处理进度显示
 
 ### 🔧 技术改进
 - [ ] **环境管理优化**: 提供Docker容器化部署选项
-- [ ] **缓存机制**: Redis缓存常用分析结果
-- [ ] **数据库集成**: PostgreSQL存储用户数据
+- [ ] **数据库集成**: 数据库存储用户数据
 - [ ] **用户系统**: 登录注册和个人空间
 - [ ] **API限流**: 防止API滥用的限流机制
 - [ ] **错误重试**: 网络请求的自动重试机制
