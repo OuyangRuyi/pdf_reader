@@ -2,12 +2,15 @@ import React, { useState, useRef, useEffect } from 'react';
 import { runAgentTask, chatWithAgent, saveChatHistory } from '../services/api';
 import { Loader2, Plus, Sparkles, PenTool, Send, Bot, Zap, Image as ImageIcon, Trash2 } from 'lucide-react';
 import ModelSelector from './ModelSelector';
+import FullscreenModal from './Modal/FullscreenModal';
 
 const AgentPanel = ({ docId, currentPage, onAddNote, initialMessages = [] }) => {
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [currentModelInfo, setCurrentModelInfo] = useState(null);
+  const [selectedMessage, setSelectedMessage] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -165,6 +168,42 @@ const AgentPanel = ({ docId, currentPage, onAddNote, initialMessages = [] }) => 
     }
   };
 
+  const handleMessageClick = (message, e) => {
+    // Prevent modal from opening when clicking buttons
+    if (e.target.closest('.icon-btn') || e.target.closest('.add-notebook-btn') || e.target.closest('.message-delete-btn')) {
+      return;
+    }
+    
+    // Create modal content based on message type
+    let modalContent = {
+      title: '',
+      content: '',
+      images: []
+    };
+    
+    if (message.role === 'user') {
+      modalContent.title = 'User Message';
+      modalContent.content = message.content || '';
+    } else if (message.card) {
+      modalContent.title = message.card.title || 'AI Response';
+      modalContent.content = message.card.content || '';
+      if (message.card.imageUrl) {
+        modalContent.images = [message.card.imageUrl];
+      }
+    } else {
+      modalContent.title = 'AI Response';
+      modalContent.content = message.content || '';
+    }
+    
+    setSelectedMessage(modalContent);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedMessage(null);
+  };
+
 
 
   return (
@@ -211,8 +250,10 @@ const AgentPanel = ({ docId, currentPage, onAddNote, initialMessages = [] }) => 
               {messages.map((msg, idx) => (
                 <div 
                   key={idx} 
-                  className={`message ${msg.role}`}
-                  style={{ position: 'relative' }}
+                  className={`message ${msg.role} clickable-card`}
+                  style={{ position: 'relative', cursor: 'pointer' }}
+                  onClick={(e) => handleMessageClick(msg, e)}
+                  title="Click to view detailed content"
                 >
                   <button 
                     className="icon-btn message-delete-btn"
@@ -343,6 +384,15 @@ const AgentPanel = ({ docId, currentPage, onAddNote, initialMessages = [] }) => 
           </div>
         </>
       )}
+      
+      {/* Fullscreen Modal */}
+      <FullscreenModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={selectedMessage?.title}
+        content={selectedMessage?.content}
+        images={selectedMessage?.images}
+      />
 
     </>
   );

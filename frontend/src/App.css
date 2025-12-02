@@ -211,6 +211,17 @@ body {
   overflow: hidden;
 }
 
+.note-card.clickable-card {
+  cursor: pointer;
+}
+
+.note-card.clickable-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px -10px rgba(0,0,0,0.6);
+}
+
 .note-card.expanded {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.15);

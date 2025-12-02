@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { Trash2, Download, Loader2, BookOpen, ChevronDown, ChevronUp, Sparkles, PenTool } from 'lucide-react';
+import FullscreenModal from './Modal/FullscreenModal';
 
 const NotebookPanel = ({ notes, onRemoveNote, onExportMarkdown, isGeneratingSummary, onGenerateSummary, onGenerateDiagram, docId }) => {
   const [expandedNotes, setExpandedNotes] = useState(new Set());
+  const [selectedNote, setSelectedNote] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   const getTagClass = (type) => {
     if (type === 'overview') return 'tag-overview';
@@ -28,6 +31,20 @@ const NotebookPanel = ({ notes, onRemoveNote, onExportMarkdown, isGeneratingSumm
   // Check if content is long enough to need expansion
   const needsExpansion = (content) => {
     return content && content.length > 120;
+  };
+
+  const handleNoteClick = (note, e) => {
+    // Prevent modal from opening when clicking expand/delete buttons
+    if (e.target.closest('.icon-btn') || e.target.closest('.note-expand-btn')) {
+      return;
+    }
+    setSelectedNote(note);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedNote(null);
   };
 
 
@@ -73,7 +90,9 @@ const NotebookPanel = ({ notes, onRemoveNote, onExportMarkdown, isGeneratingSumm
           notes.map((note) => (
             <div 
               key={note.id} 
-              className={`note-card ${expandedNotes.has(note.id) ? 'expanded' : ''}`}
+              className={`note-card ${expandedNotes.has(note.id) ? 'expanded' : ''} clickable-card`}
+              onClick={(e) => handleNoteClick(note, e)}
+              title="Click to view detailed content"
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <span className={`note-tag ${getTagClass(note.type)}`}>
@@ -173,6 +192,15 @@ const NotebookPanel = ({ notes, onRemoveNote, onExportMarkdown, isGeneratingSumm
           </div>
         </div>
       )}
+
+      {/* Fullscreen Modal */}
+      <FullscreenModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={selectedNote?.title}
+        content={selectedNote?.content}
+        images={selectedNote?.imageUrl ? [selectedNote.imageUrl] : []}
+      />
 
     </>
   );
