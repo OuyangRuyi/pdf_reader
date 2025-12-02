@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Trash2, Download, Loader2, BookOpen, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trash2, Download, Loader2, BookOpen, ChevronDown, ChevronUp, Sparkles, PenTool } from 'lucide-react';
 
-const NotebookPanel = ({ notes, onRemoveNote, onExportMarkdown, isGeneratingSummary }) => {
+const NotebookPanel = ({ notes, onRemoveNote, onExportMarkdown, isGeneratingSummary, onGenerateSummary, onGenerateDiagram, docId }) => {
   const [expandedNotes, setExpandedNotes] = useState(new Set());
   
   const getTagClass = (type) => {
@@ -29,6 +29,8 @@ const NotebookPanel = ({ notes, onRemoveNote, onExportMarkdown, isGeneratingSumm
   const needsExpansion = (content) => {
     return content && content.length > 120;
   };
+
+
 
   return (
     <>
@@ -96,12 +98,16 @@ const NotebookPanel = ({ notes, onRemoveNote, onExportMarkdown, isGeneratingSumm
                 </div>
               )}
               
-              {note.imageUrl && (
+              {note.imageUrl && !note.imageUrl.endsWith('.pdf') && (
                 <div style={{ marginBottom: '0.75rem', borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
                   <img 
-                    src={`http://localhost:8000${note.imageUrl}`} 
+                    src={note.imageUrl} 
                     alt="Note Image" 
                     style={{ width: '100%', display: 'block' }} 
+                    onError={(e) => {
+                      console.log('NotebookPanel image load error:', e.target.src);
+                      e.target.parentElement.style.display = 'none';
+                    }}
                   />
                 </div>
               )}
@@ -143,6 +149,31 @@ const NotebookPanel = ({ notes, onRemoveNote, onExportMarkdown, isGeneratingSumm
           ))
         )}
       </div>
+      
+      {/* Document-level action buttons */}
+      {docId && (
+        <div className="panel-footer">
+          <div className="action-buttons">
+            <button 
+              className="action-btn primary"
+              onClick={onGenerateSummary}
+              disabled={isGeneratingSummary}
+            >
+              <Sparkles size={16} />
+              Document Summary
+            </button>
+            <button 
+              className="action-btn secondary"
+              onClick={onGenerateDiagram}
+              disabled={isGeneratingSummary}
+            >
+              <PenTool size={16} />
+              Info Diagram
+            </button>
+          </div>
+        </div>
+      )}
+
     </>
   );
 };

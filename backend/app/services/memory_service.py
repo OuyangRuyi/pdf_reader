@@ -37,3 +37,22 @@ class MemoryService:
         if meta:
             meta.notes = [n for n in meta.notes if n.id != note_id]
             self.save_doc_meta(meta)
+
+    def update_chat_history(self, doc_id: str, history: List[dict]):
+        meta = self.load_doc_meta(doc_id)
+        if meta:
+            # Store the full chat history with all message data
+            meta.chat_history = history
+            self.save_doc_meta(meta)
+    
+    def delete_chat_message(self, doc_id: str, message_index: int):
+        meta = self.load_doc_meta(doc_id)
+        if meta and 0 <= message_index < len(meta.chat_history):
+            meta.chat_history.pop(message_index)
+            self.save_doc_meta(meta)
+    
+    def clear_chat_history(self, doc_id: str):
+        meta = self.load_doc_meta(doc_id)
+        if meta:
+            meta.chat_history = []
+            self.save_doc_meta(meta)

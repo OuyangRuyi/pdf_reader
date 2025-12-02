@@ -16,6 +16,7 @@ class DocMeta(BaseModel):
     num_pages: int
     created_at: str
     notes: List[NoteCard] = []
+    chat_history: List[Any] = []
 
 class RunTaskRequest(BaseModel):
     doc_id: str
@@ -33,3 +34,21 @@ class ChatRequest(BaseModel):
 
 class InitNotesRequest(BaseModel):
     doc_id: str
+    type: str = 'both'  # 'summary', 'diagram', or 'both'
+
+class ModelInfo(BaseModel):
+    name: str
+    provider: str
+    supports_image: bool
+    model_id: str
+
+class AvailableModelsResponse(BaseModel):
+    models: dict  # {model_id: ModelInfo}
+    current_model: str
+
+class SetModelRequest(BaseModel):
+    model_id: str
+
+class ModelResponse(BaseModel):
+    success: bool
+    current_model: dict  # ModelInfo

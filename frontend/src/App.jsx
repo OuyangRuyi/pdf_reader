@@ -9,6 +9,7 @@ function App() {
   const [docId, setDocId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [notes, setNotes] = useState([]);
+  const [chatHistory, setChatHistory] = useState([]);
   const [pdfUrl, setPdfUrl] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
@@ -23,7 +24,9 @@ function App() {
   const loadDocData = async (id) => {
     try {
       const meta = await getDocMeta(id);
+      console.log("Loaded meta data:", meta); // Debug log
       setNotes(meta.notes || []);
+      setChatHistory(meta.chat_history || []);
       setPdfUrl(getPdfUrl(id));
     } catch (err) {
       console.error("Failed to load doc data", err);
@@ -41,17 +44,14 @@ function App() {
       setDocId(res.doc_id);
       setCurrentPage(1);
       
-      // 2. Auto-generate summary notes
-      // We don't await this to block UI, but we show a loading state in notebook if needed
-      // For MVP, let's just trigger it and append notes when done
-      setIsGeneratingSummary(true);
-      initDocNotes(res.doc_id).then(response => {
-        if (response.cards && response.cards.length > 0) {
-          setNotes(prev => [...prev, ...response.cards]);
-        }
-      })
-      .catch(err => console.error("Auto-summary failed", err))
-      .finally(() => setIsGeneratingSummary(false));
+      if (res.restored) {
+        console.log("Restored existing document session");
+        // Force reload data if it's a restored session, 
+        // in case docId didn't change (re-uploading same file)
+        loadDocData(res.doc_id);
+      }
+      
+      // No longer auto-generate summary - user will manually trigger
 
     } catch (err) {
       alert("Upload failed: " + err.message);
@@ -77,6 +77,40 @@ function App() {
       await deleteNoteFromDoc(docId, noteId);
     } catch (err) {
       console.error("Failed to delete note", err);
+    }
+  };
+
+  const handleGenerateSummary = async () => {
+    if (!docId || isGeneratingSummary) return;
+    
+    setIsGeneratingSummary(true);
+    try {
+      const response = await initDocNotes(docId, 'summary');
+      if (response.cards && response.cards.length > 0) {
+        setNotes(prev => [...prev, ...response.cards]);
+      }
+    } catch (err) {
+      console.error("Failed to generate summary", err);
+      alert("Failed to generate summary: " + err.message);
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  };
+
+  const handleGenerateDiagram = async () => {
+    if (!docId || isGeneratingSummary) return;
+    
+    setIsGeneratingSummary(true);
+    try {
+      const response = await initDocNotes(docId, 'diagram');
+      if (response.cards && response.cards.length > 0) {
+        setNotes(prev => [...prev, ...response.cards]);
+      }
+    } catch (err) {
+      console.error("Failed to generate diagram", err);
+      alert("Failed to generate diagram: " + err.message);
+    } finally {
+      setIsGeneratingSummary(false);
     }
   };
 
@@ -109,6 +143,9 @@ function App() {
           onRemoveNote={handleRemoveNote} 
           onExportMarkdown={handleExportMarkdown}
           isGeneratingSummary={isGeneratingSummary}
+          onGenerateSummary={handleGenerateSummary}
+          onGenerateDiagram={handleGenerateDiagram}
+          docId={docId}
         />
       </div>
 
@@ -151,7 +188,8 @@ function App() {
         <AgentPanel 
           docId={docId} 
           currentPage={currentPage} 
-          onAddNote={handleAddNote} 
+          onAddNote={handleAddNote}
+          initialMessages={chatHistory}
         />
       </div>
     </div>

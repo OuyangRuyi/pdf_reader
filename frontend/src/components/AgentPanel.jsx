@@ -1,13 +1,60 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { runAgentTask, chatWithAgent } from '../services/api';
-import { Loader2, Plus, Sparkles, PenTool, Send, Bot, Zap, Image as ImageIcon } from 'lucide-react';
+import { runAgentTask, chatWithAgent, saveChatHistory } from '../services/api';
+import { Loader2, Plus, Sparkles, PenTool, Send, Bot, Zap, Image as ImageIcon, Trash2 } from 'lucide-react';
+import ModelSelector from './ModelSelector';
 
-const AgentPanel = ({ docId, currentPage, onAddNote }) => {
+const AgentPanel = ({ docId, currentPage, onAddNote, initialMessages = [] }) => {
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
+  const [currentModelInfo, setCurrentModelInfo] = useState(null);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
+
+  // Sync initial messages when docId or initialMessages change
+  useEffect(() => {
+    if (docId) {
+      console.log("Loading initial messages:", initialMessages); // Debug log
+      // Ensure proper message structure when loading from storage
+      const formattedMessages = (initialMessages || []).map(msg => ({
+        role: msg.role,
+        content: msg.content,
+        card: msg.card,
+        timestamp: msg.timestamp
+      }));
+      setMessages(formattedMessages);
+    } else {
+      setMessages([]);
+    }
+  }, [docId, initialMessages]);
+
+  // Auto-save chat history
+  useEffect(() => {
+    if (docId && messages.length > 0) {
+      const timer = setTimeout(() => {
+        console.log("Saving chat history:", messages); // Debug log
+        // Ensure we save the full message objects including card data
+        const fullMessages = messages.map(msg => ({
+          role: msg.role,
+          content: msg.content,
+          card: msg.card, // Make sure card data is included
+          timestamp: msg.timestamp || Date.now()
+        }));
+        saveChatHistory(docId, fullMessages).catch(err => console.error("Failed to save chat history", err));
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [messages, docId]);
+
+  const handleModelChange = (newModelInfo) => {
+    setCurrentModelInfo(newModelInfo);
+    // Add a system message about model change
+    const systemMsg = {
+      role: 'system',
+      content: `Switched to ${newModelInfo.name} (${newModelInfo.provider})`
+    };
+    setMessages(prev => [...prev, systemMsg]);
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -103,6 +150,23 @@ const AgentPanel = ({ docId, currentPage, onAddNote }) => {
     }
   };
 
+  const handleDeleteMessage = (indexToDelete) => {
+    const updatedMessages = messages.filter((_, index) => index !== indexToDelete);
+    setMessages(updatedMessages);
+    // Auto-save updated chat history
+    if (docId) {
+      const fullMessages = updatedMessages.map(msg => ({
+        role: msg.role,
+        content: msg.content,
+        card: msg.card,
+        timestamp: msg.timestamp || Date.now()
+      }));
+      saveChatHistory(docId, fullMessages).catch(err => console.error("Failed to save chat history", err));
+    }
+  };
+
+
+
   return (
     <>
       <div className="panel-header">
@@ -110,10 +174,7 @@ const AgentPanel = ({ docId, currentPage, onAddNote }) => {
           <Bot size={18} color="var(--primary)" />
           Agent Console
         </h2>
-        <div className="model-badge">
-          <div className={`status-dot ${loading ? 'thinking' : ''}`} style={{ background: loading ? '#fbbf24' : 'var(--accent-green)' }}></div>
-          Gemini 2.0 Flash
-        </div>
+        <ModelSelector onModelChange={handleModelChange} />
       </div>
       
       {!docId ? (
@@ -148,7 +209,28 @@ const AgentPanel = ({ docId, currentPage, onAddNote }) => {
               )}
               
               {messages.map((msg, idx) => (
-                <div key={idx} className={`message ${msg.role}`}>
+                <div 
+                  key={idx} 
+                  className={`message ${msg.role}`}
+                  style={{ position: 'relative' }}
+                >
+                  <button 
+                    className="icon-btn message-delete-btn"
+                    onClick={() => handleDeleteMessage(idx)}
+                    title="Delete message"
+                    style={{
+                      position: 'absolute',
+                      top: '4px',
+                      right: '4px',
+                      padding: '2px',
+                      opacity: '0.6',
+                      transition: 'opacity 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.target.style.opacity = '1'}
+                    onMouseLeave={(e) => e.target.style.opacity = '0.6'}
+                  >
+                    <Trash2 size={14} />
+                  </button>
                   {msg.content && <div>{msg.content}</div>}
                   
                   {msg.card && (
@@ -158,7 +240,15 @@ const AgentPanel = ({ docId, currentPage, onAddNote }) => {
                       </div>
                       {msg.card.imageUrl && (
                         <div className="message-card-preview" style={{ marginBottom: '0.5rem' }}>
-                          <img src={`http://localhost:8000${msg.card.imageUrl}`} alt="Generated" style={{ width: '100%', borderRadius: '4px' }} />
+                          <img 
+                            src={msg.card.imageUrl} 
+                            alt="Generated" 
+                            style={{ width: '100%', borderRadius: '4px' }} 
+                            onError={(e) => {
+                              console.log('AgentPanel image load error:', e.target.src);
+                              e.target.style.display = 'none';
+                            }}
+                          />
                         </div>
                       )}
                       <div style={{ 
@@ -231,10 +321,29 @@ const AgentPanel = ({ docId, currentPage, onAddNote }) => {
                   {action.icon} {action.label}
                 </button>
               ))}
+              
+              {messages.length > 0 && (
+                <button 
+                  className="action-chip danger" 
+                  onClick={() => {
+                    if (confirm('Clear all chat history?')) {
+                      setMessages([]);
+                      if (docId) {
+                        saveChatHistory(docId, []).catch(err => console.error("Failed to clear chat history", err));
+                      }
+                    }
+                  }}
+                  disabled={loading}
+                  title="Clear all messages"
+                >
+                  🗑️ Clear
+                </button>
+              )}
             </div>
           </div>
         </>
       )}
+
     </>
   );
 };
