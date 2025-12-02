@@ -1,4 +1,4 @@
-# 📚 PDF 智能阅读 Agent V6（全屏弹窗系统 + 高级图片查看）
+# 📚 PDF 智能阅读 Agent V6.1（全屏弹窗 + 高级图片查看 + ZIP导出）
 
 > 一个带「记忆」和专业级弹窗系统的 PDF 学术阅读 Agent：
 > - 左侧：自动生成 & 可收藏的 **笔记区**
@@ -7,12 +7,22 @@
 > - **V4 新增**：右上角 **模型选择器** - 支持 Google Gemini、DeepSeek、ByteDance Doubao 三种 AI 模型动态切换
 > - **V5 新增**：**持久化记忆** - 重新上传相同 PDF 自动恢复笔记和对话历史
 > - **V6 新增**：**全屏弹窗系统** - Portal渲染的专业级弹窗，**高级图片查看** - 70%大图显示、滚轮缩放、拖拽平移、缩放控制面板
+> - **V6.1 新增**：**ZIP导出功能** - 智能提取base64图片，生成包含Markdown文件和图片文件夹的压缩包
 
 ---
 
-## 0. 功能概览（V6 版本 - 全屏弹窗系统）
+## 0. 功能概览（V6.1 版本 - 全屏弹窗 + ZIP导出）
 
-### 🆖 V6 核心新功能
+### 🆖️⃣ V6.1 最新功能
+
+#### ZIP智能导出 (Smart ZIP Export)
+- **图片提取**：自动识别并提取笔记中的base64格式图片
+- **文件组织**：将图片保存为独立文件并创建`images/`文件夹
+- **链接更新**：自动更新Markdown中的图片链接为相对路径
+- **压缩打包**：使用JSZip生成包含所有文件的压缩包
+- **兼容性**：保证导出的Markdown文件在任何阅读器中都能正常显示图片
+
+### 🆖 V6 核心功能回顾
 
 #### 全屏弹窗系统 (Fullscreen Modal System)
 - **Portal 渲染**：使用 React Portal 将弹窗渲染到 document.body，完全脱离三栏布局限制
@@ -78,7 +88,7 @@
    - 返回作为「卡片」展示在右侧
    - 用户可以点「Add to Notebook」把右侧卡片加入左侧笔记区
 6. **【V4 新增】** 用户可以随时切换 AI 模型，体验不同模型的分析风格和能力特长。
-7. 最后用户可以点击「Export Markdown」，把左侧笔记导出为一份 `.md` 文件，作为这篇论文的阅读笔记。
+7. 最后用户可以点击「Export as ZIP」，把左侧笔记导出为一个压缩包，包含 `.md` 文件和独立的图片文件夹。
 
 ---
 
@@ -162,7 +172,7 @@
 	•	支持：
 	•	从右侧 AgentPanel 添加卡片
 	•	删除卡片
-	•	导出所有卡片为 Markdown 文件
+	•	导出所有卡片为 ZIP 压缩包（包含 Markdown 文件和图片）
 
 数据结构示例：
 
@@ -176,7 +186,7 @@ type NoteCard = {
   createdAt: string;
 };
 
-导出 Markdown 的逻辑：
+导出 ZIP 压缩包的逻辑：
 
 简单拼接：
 ```python
@@ -191,7 +201,12 @@ type NoteCard = {
 ## Diagram
 ![diagram](...)
 ```
-前端用 Blob + URL.createObjectURL 触发下载 .md 文件即可。
+前端使用 JSZip 库：
+1. 提取笔记中的 base64 图片数据
+2. 将图片保存为独立文件并加入 ZIP
+3. 更新 Markdown 中的图片链接为相对路径
+4. 将处理后的 Markdown 文件加入 ZIP
+5. 使用 Blob + URL.createObjectURL 下载 ZIP 文件
 
 ⸻
 
@@ -578,7 +593,7 @@ async def agent_plan_and_execute(doc_id, page, user_instruction):
 ### 5.2 ✅ 核心功能 (已完成)  
 - **PDF 处理**: 上传、解析、翻页、缩放
 - **Agent 交互**: Chat UI、快捷指令、卡片系统
-- **笔记管理**: NotebookPanel、收藏、导出 Markdown
+- **笔记管理**: NotebookPanel、收藏、导出 ZIP（Markdown + 图片）
 
 ### 5.3 🆕 V4 多模型功能 (已完成)
 
@@ -735,4 +750,60 @@ pip install openai volcenginesdkarkruntime
   - 支持更多图像生成模型（DALL-E、Midjourney 等）
   - 语音输入和输出功能
   - 视频内容的支持和分析
+
+---
+
+## 8. 【V6.1 更新日志】ZIP导出功能
+
+### 8.1 ✅ 问题解决 (2025-12-03)
+
+**用户反馈问题**：
+- 下载的markdown文件中图片无法正常显示
+- base64格式的图片在某些markdown阅读器中不兼容
+
+**解决方案**：
+- 实现智能ZIP导出系统
+- 自动提取base64图片并保存为独立文件
+- 更新markdown中的图片链接为相对路径
+
+### 8.2 ✅ 技术实现 (已完成)
+
+**新增依赖**：
+- `jszip`: 用于创建和管理ZIP压缩包
+
+**核心功能**：
+1. **图片提取算法**：
+   ```javascript
+   const base64ImageRegex = /!\[([^\]]*)\]\(data:image\/([^;]+);base64,([^)]+)\)/g;
+   ```
+2. **文件结构生成**：
+   ```
+   notes.zip
+   ├── notes.md          # 处理后的markdown文件
+   └── images/           # 图片文件夹
+       ├── image_1.png   # 提取的图片文件
+       ├── image_2.jpg   
+       └── ...
+   ```
+3. **链接转换**：
+   - 从：`![alt](data:image/png;base64,iVBORw0K...)`
+   - 到：`![alt](images/image_1.png)`
+
+**用户体验改进**：
+- 按钮提示更新为 "Export as ZIP (Markdown + Images)"
+- 错误处理：JSZip失败时回退到简单markdown导出
+- 文件命名：`notes.zip` 替代 `notes.md`
+
+### 8.3 验证方法
+
+用户可以通过以下方式验证新功能：
+1. 上传包含图片的PDF文档
+2. 生成包含图片的AI回复卡片
+3. 点击导出按钮下载ZIP文件
+4. 解压后检查文件结构：
+   - `notes.md` 文件包含相对路径的图片链接
+   - `images/` 文件夹包含所有提取的图片文件
+5. 在任意markdown阅读器中打开`notes.md`验证图片正常显示
+
+**兼容性**：支持所有主流markdown阅读器（Typora、Mark Text、VSCode、GitHub等）
 
