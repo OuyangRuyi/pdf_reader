@@ -1,6 +1,10 @@
-# PDF 学术阅读 Agent V6.1
+# PDF 学术阅读 Agent
 
 一个基于 AI 的智能 PDF 学术论文阅读助手，支持多模型切换和持久化记忆，帮助研究者高效分析和理解学术文献。
+
+<p align="center">
+  <img src="img/1.png" alt="PDF Agent Overview" width="840" />
+</p>
 
 ## 目录
 
@@ -12,6 +16,7 @@
 - [🎨 设计系统](#-设计系统)
 - [🧪 API 文档](#-api-文档)
 - [📝 开发历程](#-开发历程)
+- [🌲 项目海报](#-项目海报)
 - [📄 许可证](#-许可证)
 - [🙏 致谢](#-致谢)
 
@@ -41,6 +46,25 @@
 - **智能规划**: 自动判断用户意图（文本/图像/混合）
 - **持久化记忆**: 基于MD5文件指纹的智能记忆系统
 - **上下文记忆**: 维持对话历史和页面上下文
+
+### 📖 功能一览
+
+**点击卡片（打开全屏弹窗）**
+<p align="center">
+  <img src="img/2.png" alt="Open card modal" width="720" />
+</p>
+
+**模型切换（右上角选择）**
+<p align="center">
+  <img src="img/3.png" alt="Model selector" width="520" />
+</p>
+
+**笔记导出（ZIP / Markdown）**
+<p align="center">
+  <img src="img/4.png" alt="Export notes dialog" width="520" />
+  <img src="img/5.png" alt="Export zip content" width="520" />
+  <img src="img/6.png" alt="Export result preview" width="520" />
+</p>
 
 ## 🧠 Agent 认知架构
 
@@ -285,6 +309,11 @@ frontend/
 - [ ] **公式识别**: 数学公式的识别和解释
 - [ ] **图表解读**: 自动分析论文中的图表
 - [ ] **多语言支持**: 中英文混合文档处理
+
+## 🌲 项目海报
+<p align="center">
+  <img src="img/picture.png" alt="Project Poster" width="980" />
+</p>
 
 ## 📄 许可证
 
