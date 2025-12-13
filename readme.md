@@ -84,9 +84,11 @@
 ### 💾 Memory (记忆)
 - **短期记忆 (Short-term)**: `MemoryService` 维护当前的对话上下文和页面阅读状态。
 - **长期记忆 (Long-term)**: 基于 MD5 文件指纹的持久化存储，自动恢复历史笔记和对话。
+- **向量记忆 (Vector Memory)**: 基于 `text-embedding-3-large` 构建的语义索引，支持跨文档知识检索。
 - **知识库**: 结构化的 `NoteCard` 系统，将非结构化对话转化为结构化知识。
 
 ### 🛠️ Action (行动)
+- **Retrieve**: 使用 RAG 技术在向量库中检索相关文档片段，并自动扩展上下文。
 - **Summarize**: 调用 LLM 对特定页面或段落进行深度总结。
 - **Draw**: 调用生成式模型绘制概念图、流程图或数据可视化。
 - **Memory Ops**: 自动化的笔记插入、删除、更新和导出（Markdown/ZIP）。
