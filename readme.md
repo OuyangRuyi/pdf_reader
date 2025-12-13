@@ -29,6 +29,7 @@
 - **页面级摘要**: 针对每页内容生成精准摘要
 - **图表生成**: 根据文本内容自动绘制流程图和示意图（Gemini模型独有）
 - **智能问答**: 基于文档内容的上下文对话
+- **RAG 知识库**: 支持多文档上传构建知识库，进行跨文档检索和问答
 - **笔记管理**: 自动保存和组织分析结果
 
 ### 🎨 用户界面
@@ -131,6 +132,10 @@ export DEEPSEEK_API_KEY=your_deepseek_api_key_here
 
 # ByteDance Doubao (快速响应，可选)
 export ARK_API_KEY=your_bytedance_ark_api_key_here
+
+# OpenAI (用于 RAG Embedding，可选)
+export OPENAI_API_KEY=your_openai_api_key_here
+export OPENAI_BASE_URL=https://api.chatanywhere.tech/v1  # 可选，默认使用官方或此代理
 ```
 
 #### 3. 前端设置
@@ -173,6 +178,7 @@ npm run dev
 - **持久化记忆**: 相同PDF重新上传自动恢复历史
 - **全屏弹窗**: 点击卡片查看详细内容和大图
 - **图片缩放**: 在弹窗中支持滚轮缩放和拖拽平移
+- **RAG 知识库**: 上传多个 PDF 文件构建知识库，支持跨文档检索和问答
 
 ### 快捷功能
 - **Summarize**: 快速总结当前页面内容
@@ -194,7 +200,9 @@ backend/
 ├── app/
 │   ├── main.py              # 主应用入口
 │   ├── models/              # 数据模型
-│   │   └── schemas.py       # API数据模型
+│   │   └── embedding_service.py # 向量嵌入服务
+│   │   ├── rag_service.py   # RAG 检索增强生成服务
+│   │   ├── schemas.py       # API数据模型
 │   ├── services/            # 业务逻辑
 │   │   ├── agent_service.py # AI Agent核心服务
 │   │   ├── document_service.py # 文档处理和记忆管理
@@ -252,6 +260,8 @@ frontend/
 ### 主要端点
 - `POST /upload/` - 上传PDF文件（支持记忆恢复）
 - `POST /agent/task` - 执行AI任务
+- `POST /api/upload-and-embed` - 上传多文件并生成 Embedding
+- `POST /api/rag-query` - RAG 知识库问答
 - `POST /agent/chat` - 对话交互
 - `POST /agent/save-chat-history` - 保存对话历史
 - `DELETE /agent/chat/{message_id}` - 删除聊天消息
@@ -264,7 +274,13 @@ frontend/
 
 ## 📝 开发历程
 
-### ✅ V6 已完成功能 (当前版本)
+### ✅ V7 已完成功能 (当前版本)
+- ✅ **RAG 知识库**: 基于 `text-embedding-3-large` 的文档向量化
+- ✅ **跨文档检索**: 支持多文档上传和语义检索
+- ✅ **智能分块**: 语义感知的文本分块策略 (2000 token chunk / 200 overlap)
+- ✅ **上下文扩展**: 检索结果自动扩展为完整句子上下文
+
+### ✅ V6 已完成功能
 - ✅ **全屏弹窗系统**: Portal渲染的专业级弹窗组件
 - ✅ **高级图片查看**: 70%大图显示、滚轮缩放、拖拽平移
 - ✅ **缩放控制面板**: ±按钮、百分比显示、关闭按钮
