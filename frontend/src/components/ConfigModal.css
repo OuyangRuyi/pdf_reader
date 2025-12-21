@@ -1,0 +1,161 @@
+.config-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
+}
+
+.config-modal-content {
+  background: #1e1e1e;
+  color: #e0e0e0;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  border: 1px solid #333;
+}
+
+.config-modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.config-modal-content::-webkit-scrollbar-track {
+  background: #1e1e1e;
+  border-radius: 0 12px 12px 0;
+}
+
+.config-modal-content::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+
+.config-modal-content::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}
+
+.config-modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: #fff;
+}
+
+.config-subtitle {
+  color: #888;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.config-section {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #333;
+}
+
+.config-section:last-of-type {
+  border-bottom: none;
+}
+
+.config-section h3 {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: #4a9eff;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: #bbb;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  background: #2d2d2d;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #4a9eff;
+  background: #333;
+}
+
+.config-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.config-actions button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-btn {
+  background: transparent;
+  border: 1px solid #444;
+  color: #ccc;
+}
+
+.cancel-btn:hover {
+  background: #333;
+  color: #fff;
+}
+
+.save-btn {
+  background: #4a9eff;
+  border: none;
+  color: #fff;
+}
+
+.save-btn:hover {
+  background: #357abd;
+}
+
+.save-btn:disabled {
+  background: #333;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.config-message {
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.config-message.success {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.config-message.error {
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+  border: 1px solid rgba(244, 67, 54, 0.3);
+}
