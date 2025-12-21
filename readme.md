@@ -203,4 +203,8 @@ frontend/
    ```
 
 ## 10. Demo
-Access the service at `http://localhost:5173` after starting both servers. Upload a research paper to see the agent in action.
+
+- **Local**: Access the service at `http://localhost:5173` after starting both servers.
+- **Live Demo**: [https://paperbench-frontend.onrender.com/](https://paperbench-frontend.onrender.com/)
+
+> **Note**: The live demo is hosted on a **Render Free Tier** instance. Due to hardware limitations (limited CPU, Memory and bandwidth), the initial loading, PDF processing, and AI response times may be slower than local execution. You may occasionally encounter **503 errors** or failed responses due to memory exhaustion on the free tier; these issues are environment-specific and will not occur in a local deployment. For the best performance and stability, local deployment is recommended.
