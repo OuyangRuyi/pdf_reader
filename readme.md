@@ -67,23 +67,45 @@ The agent decides the best way to help you. It picks the right tool for tasks li
 - **Knowledge Base**: Searches through all your documents to answer cross-paper questions.
 
 ### 4.4 Action
-The agent performs the work: it reads the PDF structure, captures high-quality images of diagrams, and exports your notes to Markdown.
+The Action layer is the execution engine where the agent interacts with its tools and environment to fulfill the generated plan:
+- **Tool Dispatching**: Dynamically invokes specialized services, such as `DocumentService` for structural text extraction or `MultiModelClient` for multi-modal generation-based on the planning results.
+- **Knowledge Retrieval**: Implements a custom vector search engine using NumPy for high-performance cosine similarity calculations, ensuring that actions are grounded in document evidence.
+- **Proactive Guidance**: Generates "Active Reading" cards and "Mentor Questions" to push information to the user, moving beyond simple reactive Q&A.
+- **State Mutation**: Updates the system's "World State" by committing new insights to the `MemoryService`, evolving the user's interest profile, and persisting notes to the long-term storage.
+- **Artifact Production**: Transforms raw AI outputs into structured, persistent artifacts like `NoteCards`, Markdown files, or high-resolution technical illustrations.
 
 ## 5. System Architecture
+
+### Tech Stack
+- **Backend**: FastAPI, OpenA, Google Integrations, PyMuPDF, pymupdf4llm
+- **Frontend**: React, Vite, PDF.js
+- **AI Models**: gemini-2.5-flash, gemini-2.5-flash-image, gemini-3-pro-preview, gemini-3-pro-image-preview, deepseek-chat, deepseek-reasoner, doubao-seed-1-6-251015
+- **Deployment**: Render (Cloud)
 
 ### Backend (FastAPI + Python)
 ```
 backend/
 ├── app/
 │   ├── main.py              # API entry point
-│   ├── models/              # Data structures
-│   ├── services/            # Core logic (AI Agent, PDF processing, RAG)
+│   ├── models/
+│   │   └── schemas.py       # Pydantic models
+│   ├── services/            # Core logic
+│   │   ├── agent_service.py     # AI Agent orchestration
+│   │   ├── config_service.py    # Configuration management
+│   │   ├── document_service.py  # PDF processing & extraction
+│   │   ├── embedding_service.py # Vector embeddings
+│   │   ├── gemini_client.py     # Gemini API integration
+│   │   ├── memory_service.py    # Session & long-term memory
+│   │   ├── multi_model_client.py # Multi-model routing
+│   │   └── rag_service.py       # RAG implementation
 │   └── utils/               # Helper functions
 ├── data/
-│   ├── docs/                # Paper metadata
-│   ├── embeddings/          # Search index
-│   ├── uploads/             # PDFs and images
-│   └── file_map.json        # File tracking
+│   ├── docs/                # Processed paper metadata
+│   ├── embeddings/          # Vector search index
+│   ├── uploads/             # Original PDFs and extracted images
+│   ├── config.json          # System configuration
+│   ├── file_map.json        # File tracking & mapping
+│   └── user_profile.json    # User preferences & interests
 └── requirements.txt
 ```
 
@@ -91,16 +113,39 @@ backend/
 ```
 frontend/
 ├── src/
-│   ├── components/          # UI parts (PDF Viewer, Chat Panel, Notebook)
-│   ├── services/            # API connection
-│   ├── App.jsx              # Main layout
-│   └── main.jsx             # App entry
-└── package.json
+│   ├── components/          # UI Components
+│   │   ├── AgentPanel.jsx      # Chat & Agent interaction
+│   │   ├── ConfigModal.jsx     # Settings & API keys
+│   │   ├── ModelSelector.jsx   # AI model selection
+│   │   ├── NotebookPanel.jsx   # Note-taking interface
+│   │   ├── PDFViewer.jsx       # PDF rendering & interaction
+│   │   ├── ProfileModal.jsx    # User profile management
+│   │   └── Modal/
+│   │       └── FullscreenModal.jsx
+│   ├── services/
+│   │   └── api.js           # Axios API client
+│   ├── App.jsx              # Main layout & state
+│   └── main.jsx             # App entry point
+├── index.html
+├── package.json
+└── vite.config.js
 ```
 
 ## 6. Implementation Details
 
-### Smart Search (RAG)
+### Intent Recognition
+- **Action-Triggered**: Explicit intents are captured via UI buttons (e.g., "Summarize Page", "Draw Diagram", "Full Paper Analysis").
+- **Query Analysis**: The agent parses natural language questions to identify required outputs, determining whether to generate a visual diagram, or provide a direct textual explanation.
+- **Contextual Routing**: Dynamically selects the appropriate tool based on the user's current reading position and historical interaction.
+
+### Model Orchestration
+- **Unified AI Interface**: Features a custom-built multi-model client that seamlessly switches between Gemini, DeepSeek, and Doubao while maintaining session context.
+- **Dialogue & Reasoning**: Directly integrates with `google-generativeai` and `openai` SDKs for high-fidelity reasoning and interactive Q&A.
+- **Visual Synthesis**: Specialized prompts transform complex technical descriptions into structured Mermaid diagrams or visual concept maps.
+- **Embedding Pipeline**: Utilizes OpenAI's `text-embedding-3-large` for high-dimensional vectorization, ensuring precise document retrieval.
+- **Strategic Selection**: Models are selected based on a balance of reasoning capability, cost-efficiency (e.g., Gemini's free tier), and regional availability.
+
+### RAG
 - **Section-Aware**: The system labels each piece of text with its section title (e.g., "Methodology") so the agent finds more accurate answers.
 - **High Quality**: Uses OpenAI's latest embedding models to understand the deep meaning of academic text.
 
@@ -157,7 +202,7 @@ frontend/
   <img src="img/19.png" width="840" />
 </p>
 
-- **Multi-Model Switching**: Swap between Gemini 2.0/3.0, DeepSeek, and Doubao without losing context.
+- **Multi-Model Switching**: Swap between Gemini 2.5/3.0, DeepSeek, and Doubao without losing context.
 <p align="center">
   <img src="img/16.png" width="840" />
 </p>
@@ -207,4 +252,4 @@ frontend/
 - **Local**: Access the service at `http://localhost:5173` after starting both servers.
 - **Live Demo**: [https://paperbench-frontend.onrender.com/](https://paperbench-frontend.onrender.com/)
 
-> **Note**: The live demo is hosted on a **Render Free Tier** instance. Due to hardware limitations (limited CPU, Memory and bandwidth), the initial loading, PDF processing, and AI response times may be slower than local execution. You may occasionally encounter **503 errors** or failed responses due to memory exhaustion on the free tier; these issues are environment-specific and will not occur in a local deployment. For the best performance and stability, local deployment is recommended.
+> **Note**: The live demo is hosted on a **Render Free Tier** instance. Due to hardware limitations (limited CPU, Memory and bandwidth), the initial loading, first time PDF upload processing, and AI response times may be significantly slower than local execution. If a timeout error occurs during your first upload, please try again. You may occasionally encounter **503 errors** or failed responses due to memory exhaustion on the free tier. These issues are environment-specific and will not occur in a local deployment. For the best performance and stability, local deployment is recommended.
