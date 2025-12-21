@@ -26,15 +26,23 @@ class EmbeddingService:
         api_key = self.config_service.get("OPENAI_API_KEY", "")
         base_url = self.config_service.get("OPENAI_BASE_URL", "")
         
-        self.client = AsyncOpenAI(
-            api_key=api_key,
-            base_url=base_url
-        )
+        if api_key:
+            self.client = AsyncOpenAI(
+                api_key=api_key,
+                base_url=base_url
+            )
+        else:
+            self.client = None
+            print("Warning: OPENAI_API_KEY not set, embedding service will be limited")
     
     async def create_embeddings(self, doc_id: str) -> bool:
         """
         为 PDF 文档创建结构化 embedding（异步版本）
         """
+        if not self.client:
+            print("Error: OpenAI API Key is missing. Please configure it in the settings.")
+            return False
+            
         try:
             print(f"开始为文档 {doc_id} 创建结构化 embeddings...")
             

@@ -36,12 +36,12 @@ class ConfigService:
     def get(self, key: str, default: Any = None) -> Any:
         # 1. Try to get from local config.json
         value = self.config.get(key)
-        if value is not None:
+        if value:  # Check if value is not None and not empty string
             return value
             
         # 2. Fallback to environment variables (standard for cloud deployment like Render)
         env_value = os.environ.get(key)
-        if env_value is not None:
+        if env_value:
             return env_value
             
         return default
