@@ -34,10 +34,20 @@ class ConfigService:
             return False
 
     def get(self, key: str, default: Any = None) -> Any:
-        return self.config.get(key, default)
+        # 1. Try to get from local config.json
+        value = self.config.get(key)
+        if value is not None:
+            return value
+            
+        # 2. Fallback to environment variables (standard for cloud deployment like Render)
+        env_value = os.environ.get(key)
+        if env_value is not None:
+            return env_value
+            
+        return default
 
     def is_configured(self) -> bool:
-        # Check if at least one major API key is set
+        # Check if at least one major API key is set (either in config.json or env vars)
         return any([
             self.get("OPENAI_API_KEY"),
             self.get("GEMINI_API_KEY"),
