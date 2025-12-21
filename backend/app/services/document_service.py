@@ -20,6 +20,25 @@ class DocumentService:
         if not os.path.exists(FILE_MAP_PATH):
             with open(FILE_MAP_PATH, "w") as f:
                 json.dump({}, f)
+        # Cache for extracted text to speed up subsequent analysis
+        self._text_cache = {}
+
+    def _is_low_memory_env(self) -> bool:
+        """Detect if running in a low-memory environment like Render free tier"""
+        # 1. Check for Render environment variable
+        if os.environ.get("RENDER") == "true":
+            return True
+        
+        # 2. Check total system memory on Linux/Mac
+        try:
+            # Total memory in bytes
+            total_mem = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
+            if total_mem < 1.5 * 1024 * 1024 * 1024:  # Less than 1.5GB
+                return True
+        except:
+            pass
+            
+        return False
 
     def _calculate_file_hash(self, file_obj) -> str:
         md5_hash = hashlib.md5()
@@ -130,6 +149,11 @@ class DocumentService:
         }
 
     def extract_page_text(self, doc_id: str, page_num: int) -> str:
+        # Check cache first
+        cache_key = f"{doc_id}_p{page_num}"
+        if cache_key in self._text_cache:
+            return self._text_cache[cache_key]
+
         file_path = os.path.join(UPLOAD_DIR, f"{doc_id}.pdf")
         if not os.path.exists(file_path):
             raise FileNotFoundError("Document not found")
@@ -140,27 +164,47 @@ class DocumentService:
             raise ValueError("Page number out of range")
             
         page = doc[page_num - 1]
-        return page.get_text()
+        text = page.get_text()
+        
+        # Store in cache
+        self._text_cache[cache_key] = text
+        return text
 
     def extract_full_text(self, doc_id: str, max_pages: int = 10) -> str:
+        # Check cache first
+        cache_key = f"{doc_id}_full_{max_pages}"
+        if cache_key in self._text_cache:
+            return self._text_cache[cache_key]
+
         file_path = os.path.join(UPLOAD_DIR, f"{doc_id}.pdf")
         if not os.path.exists(file_path):
             raise FileNotFoundError("Document not found")
             
-        # Use pymupdf4llm for high-quality Markdown extraction
-        # This handles multi-column layouts, tables, and headers much better
-        try:
-            md_text = pymupdf4llm.to_markdown(file_path, pages=list(range(max_pages)))
-            return md_text
-        except Exception as e:
-            print(f"Error using pymupdf4llm: {e}, falling back to basic extraction")
-            doc = fitz.open(file_path)
-            text = ""
-            pages_to_read = min(len(doc), max_pages)
-            for i in range(pages_to_read):
-                text += f"--- Page {i+1} ---\n"
-                text += doc[i].get_text() + "\n"
-            return text
+        # Dynamic strategy based on environment
+        if self._is_low_memory_env():
+            print("Low memory environment detected. Using basic extraction to prevent crash.")
+            text = self._extract_basic_text(file_path, max_pages)
+        else:
+            # Use pymupdf4llm for high-quality Markdown extraction on capable machines
+            try:
+                text = pymupdf4llm.to_markdown(file_path, pages=list(range(max_pages)))
+            except Exception as e:
+                print(f"Error using pymupdf4llm: {e}, falling back to basic extraction")
+                text = self._extract_basic_text(file_path, max_pages)
+        
+        # Store in cache
+        self._text_cache[cache_key] = text
+        return text
+
+    def _extract_basic_text(self, file_path: str, max_pages: int) -> str:
+        """Lightweight text extraction fallback"""
+        doc = fitz.open(file_path)
+        text = ""
+        pages_to_read = min(len(doc), max_pages)
+        for i in range(pages_to_read):
+            text += f"--- Page {i+1} ---\n"
+            text += doc[i].get_text() + "\n"
+        return text
 
     def get_structured_layout(self, doc_id: str, max_pages: int = 1000) -> List[Dict[str, Any]]:
         """
@@ -170,73 +214,72 @@ class DocumentService:
         if not os.path.exists(file_path):
             raise FileNotFoundError("Document not found")
             
-        try:
-            # Get actual number of pages to avoid out of range error
-            doc = fitz.open(file_path)
-            num_pages = len(doc)
-            doc.close()
-            
-            # pymupdf4llm.to_markdown can return a list of dicts if we use the right parameters
-            # but for simplicity and reliability, we'll use its internal logic to get clean text
-            # and then chunk it by headers/paragraphs.
-            pages_to_read = list(range(min(max_pages, num_pages)))
-            md_text = pymupdf4llm.to_markdown(file_path, pages=pages_to_read)
-            
-            # Split by double newlines to get paragraphs/blocks
-            raw_blocks = md_text.split("\n\n")
-            structured_blocks = []
-            
-            for i, block in enumerate(raw_blocks):
-                if not block.strip(): continue
+        # If low memory, skip the heavy pymupdf4llm layout analysis
+        if not self._is_low_memory_env():
+            try:
+                # Get actual number of pages to avoid out of range error
+                doc = fitz.open(file_path)
+                num_pages = len(doc)
+                doc.close()
                 
-                # Try to estimate page number (pymupdf4llm often inserts page markers like <page: 1>)
-                # This is a bit hacky but works for many versions of pymupdf4llm
-                page_num = 1
-                import re
-                page_match = re.search(r"<!-- page_number: (\d+) -->", block)
-                if page_match:
-                    page_num = int(page_match.group(1))
+                pages_to_read = list(range(min(max_pages, num_pages)))
+                md_text = pymupdf4llm.to_markdown(file_path, pages=pages_to_read)
                 
-                structured_blocks.append({
-                    "page": page_num,
-                    "text": block.strip(),
-                    "order": i,
-                    "bbox": [0, 0, 0, 0] # Markdown blocks don't have bbox easily
-                })
-            
-            if structured_blocks:
-                return structured_blocks
-        except Exception as e:
-            print(f"Error in structured layout with pymupdf4llm: {e}")
-
-        # Fallback to basic block extraction
-        doc = fitz.open(file_path)
-        all_blocks = []
-        pages_to_read = min(len(doc), max_pages)
-        for page_idx in range(pages_to_read):
-            page = doc[page_idx]
-            page_dict = page.get_text("dict")
-            for block in page_dict.get("blocks", []):
-                if block.get("type") != 0: continue
+                # Split by double newlines to get paragraphs/blocks
+                raw_blocks = md_text.split("\n\n")
+                structured_blocks = []
                 
-                # Keep spans for classification in EmbeddingService
-                lines = block.get("lines", [])
-                spans = []
-                block_text = ""
-                for line in lines:
-                    for span in line.get("spans", []):
-                        spans.append(span)
-                        block_text += span.get("text", "") + " "
-                
-                if block_text.strip():
-                    all_blocks.append({
-                        "page": page_idx + 1,
-                        "text": block_text.strip(),
-                        "order": len(all_blocks),
-                        "spans": spans,
-                        "bbox": block.get("bbox")
+                for i, block in enumerate(raw_blocks):
+                    if not block.strip(): continue
+                    
+                    page_num = 1
+                    import re
+                    page_match = re.search(r"<!-- page_number: (\d+) -->", block)
+                    if page_match:
+                        page_num = int(page_match.group(1))
+                    
+                    structured_blocks.append({
+                        "page": page_num,
+                        "text": block.strip(),
+                        "order": i,
+                        "bbox": [0, 0, 0, 0]
                     })
-        return all_blocks
+                
+                if structured_blocks:
+                    return structured_blocks
+            except Exception as e:
+                print(f"Error in structured layout with pymupdf4llm: {e}")
+
+        # Fallback to basic block extraction (Low memory or error)
+        doc = fitz.open(file_path)
+        try:
+            all_blocks = []
+            pages_to_read = min(len(doc), max_pages)
+            for page_idx in range(pages_to_read):
+                page = doc[page_idx]
+                page_dict = page.get_text("dict")
+                for block in page_dict.get("blocks", []):
+                    if block.get("type") != 0: continue
+                    
+                    lines = block.get("lines", [])
+                    spans = []
+                    block_text = ""
+                    for line in lines:
+                        for span in line.get("spans", []):
+                            spans.append(span)
+                            block_text += span.get("text", "") + " "
+                    
+                    if block_text.strip():
+                        all_blocks.append({
+                            "page": page_idx + 1,
+                            "text": block_text.strip(),
+                            "order": len(all_blocks),
+                            "spans": spans,
+                            "bbox": block.get("bbox")
+                        })
+            return all_blocks
+        finally:
+            doc.close()
 
     def get_toc(self, doc_id: str) -> List[Dict[str, Any]]:
         """Get Table of Contents"""
